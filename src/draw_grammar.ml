@@ -133,7 +133,7 @@ let () =
     | files ->
       files
       |> Li.iter ~f:(fun input_name ->
-        let output_name = Frmt.apply "%s.png" input_name in
+        let output_name = Frmt.apply "%s.svg" input_name in
         StdOut.print
           "Drawing %s%s to %s\n"
           input_name
@@ -170,11 +170,11 @@ let () =
         in
         let context = Cairo.create (Cairo.Image.create Cairo.Image.RGB24 ~w:1 ~h:1) in
         let (w, h) = Drawer.measure grammar ~context in
-        let image = Cairo.Image.create Cairo.Image.RGB24 ~w:(Int.of_float w) ~h:(Int.of_float h) in
+        let image = Cairo.SVG.create output_name ~w:w ~h:h in
         let context = Cairo.create image in
         Cairo.set_source_rgb context 1. 1. 1.;
         Cairo.paint context;
         Cairo.set_source_rgb context 0. 0. 0.;
         Drawer.draw grammar ~context;
-        Cairo.PNG.write image output_name
+        Cairo.Surface.finish image
       )

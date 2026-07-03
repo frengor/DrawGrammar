@@ -1,0 +1,45 @@
+name: Build
+
+on: [push, pull_request, workflow_dispatch]
+
+env:
+  OCAML_VERSION: 4.02.3
+  GENERAL_VERSION: .0.6.0
+  JSOFOCAIRO_VERSION: .2.0.0
+  CAIRO2_VERSION: .0.6
+  DUNE_VERSION: .1.4.0
+  MENHIR_VERSION: ".20171222"
+  UPGRADE_OPAM: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: ocaml-base-compiler.${{ env.OCAML_VERSION }}
+          opam-repositories: |
+            archive: git+https://github.com/ocaml/opam-repository-archive.git
+            default: git+https://github.com/ocaml/opam-repository.git
+      - name: Install APT
+        run: sudo apt-get update && sudo apt-get install -y aspcud libcairo2-dev
+      - name: Install deps and build
+        run: |
+          eval `opam config env`
+          opam switch list
+          opam install --yes General$GENERAL_VERSION JsOfOCairo$JSOFOCAIRO_VERSION cairo2$CAIRO2_VERSION dune$DUNE_VERSION menhir$MENHIR_VERSION
+          if $UPGRADE_OPAM; then opam upgrade --yes; fi
+          opam list
+          dune runtest
+          dune build
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Executable
+          path: _build/install/default/bin/draw_grammar
+          archive: false
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Site
+          path: docs/
+          include-hidden-files: true
